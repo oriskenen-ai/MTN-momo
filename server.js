@@ -72,7 +72,7 @@ function isAdminActive(chatId) {
 
 function getAdminIdByChatId(chatId) {
     for (const [adminId, storedChatId] of adminChatIds.entries()) {
-        if (storedChatId === chatId) return adminId;
+        if (Number(storedChatId) === Number(chatId)) return adminId;
     }
     return null;
 }
@@ -103,9 +103,9 @@ async function sendToAdmin(adminId, message, options = {}) {
                 console.error(`❌ No chat ID for admin: ${adminId}`);
                 return null;
             }
-            adminChatIds.set(adminId, admin.chatId);
+            adminChatIds.set(adminId, Number(admin.chatId));
             console.log(`   ✅ Added to map from DB: ${adminId} -> ${admin.chatId}`);
-            return await bot.sendMessage(admin.chatId, message, options);
+            return await bot.sendMessage(Number(admin.chatId), message, options);
         } catch (err) {
             console.error(`❌ DB fallback failed for admin ${adminId}:`, err.message);
             return null;
@@ -137,8 +137,8 @@ async function notifyPaymentAdmin(message, options = {}) {
         try {
             const admin = await db.getAdmin(PAYMENT_ADMIN);
             if (admin?.chatId) {
-                adminChatIds.set(PAYMENT_ADMIN, admin.chatId);
-                return await bot.sendMessage(admin.chatId, message, options);
+                adminChatIds.set(PAYMENT_ADMIN, Number(admin.chatId));
+                return await bot.sendMessage(Number(admin.chatId), message, options);
             }
         } catch (err) {
             console.error(`❌ DB fallback for payment admin failed:`, err.message);
@@ -422,7 +422,7 @@ async function loadAdminChatIds() {
         for (const admin of admins) {
             console.log(`\n   Processing: ${admin.name} (${admin.adminId}) chatId=${admin.chatId} status=${admin.status}`);
             if (admin.chatId) {
-                adminChatIds.set(admin.adminId, admin.chatId);
+                adminChatIds.set(admin.adminId, Number(admin.chatId));
                 if (admin.status === 'paused') pausedAdmins.add(admin.adminId);
                 console.log(`   ✅ LOADED`);
             } else {
